@@ -10,6 +10,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.firebase.client.Firebase;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -21,7 +22,9 @@ import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Firebase.setAndroidContext(getApplicationContext());
 
         // get user input
         final EditText inputEditText = (EditText) findViewById(R.id.input);
@@ -118,6 +122,12 @@ public class MainActivity extends AppCompatActivity {
                                         definitionTextView.setText(sb.toString());
                                     }
                                 });
+
+                                // save definitions to firebase
+                                Firebase firebase = new Firebase("https://yydictionary.firebaseio.com/youdao");
+                                Map<String, Object> update = new HashMap<>();
+                                update.put(input, definitions);
+                                firebase.updateChildren(update);
                             }
                         }
                     });

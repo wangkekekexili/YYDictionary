@@ -26,19 +26,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 public class MainActivity extends AppCompatActivity {
 
     private static String TAG = MainActivity.class.getSimpleName();
+
+    @Bind(R.id.input) EditText inputEditText;
+    @Bind(R.id.definition) TextView definitionTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
         Firebase.setAndroidContext(getApplicationContext());
-
-        // get user input
-        final EditText inputEditText = (EditText) findViewById(R.id.input);
-        final TextView definitionTextView = (TextView) findViewById(R.id.definition);
 
         inputEditText.setCursorVisible(false);
         inputEditText.setOnClickListener(new View.OnClickListener() {

@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -218,5 +220,21 @@ public class MainActivity extends AppCompatActivity {
         }
         player = MediaPlayer.create(getApplicationContext(), Uri.parse("file://" + audioFile.getAbsolutePath()));
         player.start();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        String input = inputEditText.getText().toString();
+        File audioFile = new File(getFilesDir(), input + ".wav");
+        if (audioFile.exists()) {
+            playAudio(audioFile);
+        }
+        return true;
     }
 }

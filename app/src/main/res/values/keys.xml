@@ -2,4 +2,5 @@
 <resources>
     <string name="youdao_api_key">1266068425</string>
     <string name="youdao_api_keyfrom">KeAndYiyangsFamily</string>
+    <string name="webster_dictionary_key">7a996464-b5ff-42e4-a2b3-3df2554fee55</string>
 </resources>

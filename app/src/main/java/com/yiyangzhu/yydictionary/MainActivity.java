@@ -21,6 +21,14 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
+import org.jsoup.select.Elements;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Bind(R.id.input) EditText inputEditText;
     @Bind(R.id.definition) TextView definitionTextView;
+
+    private MediaPlayer player;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,18 +75,20 @@ public class MainActivity extends AppCompatActivity {
                     if (input.trim().equals("")) {
                         return true;
                     }
-                    Uri queryUri = Uri.parse("http://fanyi.youdao.com/openapi.do?type=data&doctype=json&version=1.1")
+
+                    final OkHttpClient client = new OkHttpClient();
+
+                    Uri youdaoQuery = Uri.parse("http://fanyi.youdao.com/openapi.do?type=data&doctype=json&version=1.1")
                             .buildUpon()
                             .appendQueryParameter("keyfrom", getString(R.string.youdao_api_keyfrom))
                             .appendQueryParameter("key", getString(R.string.youdao_api_key))
                             .appendQueryParameter("q", input)
                             .build();
-                    Log.d(TAG, queryUri.toString());
-                    OkHttpClient client = new OkHttpClient();
-                    Request request = new Request.Builder()
-                            .url(queryUri.toString())
+                    Log.d(TAG, youdaoQuery.toString());
+                    Request youdaoRequest = new Request.Builder()
+                            .url(youdaoQuery.toString())
                             .build();
-                    client.newCall(request).enqueue(new Callback() {
+                    client.newCall(youdaoRequest).enqueue(new Callback() {
                         @Override
                         public void onFailure(Request request, IOException e) {
 
@@ -127,9 +139,84 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                     });
+
+                    // check if audio exists
+                    // if not, download from Marriam-Webster
+                    File storageFileDirectory = getFilesDir();
+                    final File audioFile = new File(storageFileDirectory, input + ".wav");
+                    if (!audioFile.exists()) {
+                        Uri websterQuery = Uri.parse("http://www.dictionaryapi.com/api/v1/references/collegiate/xml")
+                                .buildUpon()
+                                .appendPath(input)
+                                .appendQueryParameter("key", getString(R.string.webster_dictionary_key))
+                                .build();
+                        Log.d(TAG, websterQuery.toString());
+                        Request websterRequest = new Request.Builder()
+                                .url(websterQuery.toString())
+                                .build();
+                        client.newCall(websterRequest).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(Request request, IOException e) {
+
+                            }
+
+                            @Override
+                            public void onResponse(Response response) throws IOException {
+                                Document document = Jsoup.parse(response.body().string(), "", Parser.xmlParser());
+                                Elements wavElements = document.getElementsByTag("wav");
+                                if (wavElements.size() == 0) {
+                                    return;
+                                } else {
+                                    Element wavFirstElement = wavElements.get(0);
+                                    String audioName = wavFirstElement.text();
+                                    StringBuilder audioUrlBuilder = new StringBuilder();
+                                    audioUrlBuilder.append("http://media.merriam-webster.com/soundc11/");
+                                    if (audioName.startsWith("bix")) {
+                                        audioUrlBuilder.append("bix");
+                                    } else if (audioName.startsWith("gg")) {
+                                        audioUrlBuilder.append("gg");
+                                    } else {
+                                        audioUrlBuilder.append(audioName.charAt(0));
+                                    }
+                                    audioUrlBuilder.append("/");
+                                    audioUrlBuilder.append(audioName);
+
+                                    // get audio file
+                                    Request audioRequest = new Request.Builder()
+                                            .url(audioUrlBuilder.toString())
+                                            .build();
+                                    client.newCall(audioRequest).enqueue(new Callback() {
+                                        @Override
+                                        public void onFailure(Request request, IOException e) {
+
+                                        }
+
+                                        @Override
+                                        public void onResponse(Response response) throws IOException {
+                                            byte[] bytes = response.body().bytes();
+                                            try (FileOutputStream fos = new FileOutputStream(audioFile)) {
+                                                fos.write(bytes);
+                                            } catch (IOException e) {}
+                                            playAudio(audioFile);
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    } else {
+                        playAudio(audioFile);
+                    }
                 }
                 return false;
             }
         });
+    }
+
+    private void playAudio(File audioFile) {
+        if (player != null) {
+            player.stop();
+        }
+        player = MediaPlayer.create(getApplicationContext(), Uri.parse("file://" + audioFile.getAbsolutePath()));
+        player.start();
     }
 }

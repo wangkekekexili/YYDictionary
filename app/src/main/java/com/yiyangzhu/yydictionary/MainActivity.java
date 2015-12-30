@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final List<String> definitions = new ArrayList<String>();
+        final List<String> definitions = new ArrayList<>();
         inputEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -134,10 +134,6 @@ public class MainActivity extends AppCompatActivity {
                                 Map<String, Object> update = new HashMap<>();
                                 update.put(input, definitions);
                                 firebase.updateChildren(update);
-
-                                // save to firebase "builder" for possible future use
-                                firebase = new Firebase("https://yydictionary.firebaseio.com/builder");
-                                firebase.push().setValue(input);
                             }
                         }
                     });
@@ -230,11 +226,26 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        String input = inputEditText.getText().toString();
-        File audioFile = new File(getFilesDir(), input + ".wav");
-        if (audioFile.exists()) {
-            playAudio(audioFile);
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.play: {
+                String input = inputEditText.getText().toString();
+                File audioFile = new File(getFilesDir(), input + ".wav");
+                if (audioFile.exists()) {
+                    playAudio(audioFile);
+                }
+                return true;
+            }
+            case R.id.add: {
+                String input = inputEditText.getText().toString();
+                if (!input.trim().equals("")) {
+                    Firebase firebase = new Firebase("http://yydictionary.firebaseio.com/builder");
+                    firebase.push().setValue(input);
+                }
+                return true;
+            }
+            default:
+                return false;
         }
-        return true;
     }
 }

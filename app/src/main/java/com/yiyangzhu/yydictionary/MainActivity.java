@@ -91,18 +91,6 @@ public class MainActivity extends AppCompatActivity {
                                 for (JsonElement element : basicDefinitions) {
                                     definitions.add(element.getAsString());
                                 }
-                            } else if (root.get("web") != null) {
-                                JsonArray webDefinitions = root.get("web").getAsJsonArray();
-                                for (JsonElement element : webDefinitions) {
-                                    String key = element.getAsJsonObject().get("key").getAsString();
-                                    JsonArray value = element.getAsJsonObject().get("value").getAsJsonArray();
-                                    if (key.toLowerCase().equals(input.toLowerCase())) {
-                                        for (JsonElement element2 : value) {
-                                            definitions.add(element2.getAsString());
-                                        }
-                                        break;
-                                    }
-                                }
                             }
                             if (definitions.size() == 0) {
                                 runOnUiThread(new Runnable() {

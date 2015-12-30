@@ -1,5 +1,6 @@
 package com.yiyangzhu.yydictionary;
 
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -119,6 +120,10 @@ public class MainActivity extends AppCompatActivity {
                                 Map<String, Object> update = new HashMap<>();
                                 update.put(input, definitions);
                                 firebase.updateChildren(update);
+
+                                // save to firebase "builder" for possible future use
+                                firebase = new Firebase("https://yydictionary.firebaseio.com/builder");
+                                firebase.push().setValue(input);
                             }
                         }
                     });

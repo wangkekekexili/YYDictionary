@@ -12,4 +12,9 @@
         android:title="play"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/builder"
+        android:title="builder"
+        app:showAsAction="never" />
+
 </menu>

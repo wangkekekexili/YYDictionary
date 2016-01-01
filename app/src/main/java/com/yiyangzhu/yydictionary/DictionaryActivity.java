@@ -43,9 +43,9 @@ import java.util.Map;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity {
+public class DictionaryActivity extends AppCompatActivity {
 
-    private static String TAG = MainActivity.class.getSimpleName();
+    private static String TAG = DictionaryActivity.class.getSimpleName();
 
     @Bind(R.id.input) EditText inputEditText;
     @Bind(R.id.definition) TextView definitionTextView;
@@ -55,9 +55,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_dictionary);
         ButterKnife.bind(this);
-        Firebase.setAndroidContext(getApplicationContext());
 
         retrieveYoudaoDictionary();
 
@@ -226,7 +225,8 @@ public class MainActivity extends AppCompatActivity {
                                             byte[] bytes = response.body().bytes();
                                             try (FileOutputStream fos = new FileOutputStream(audioFile)) {
                                                 fos.write(bytes);
-                                            } catch (IOException e) {}
+                                            } catch (IOException e) {
+                                            }
                                             playAudio(audioFile);
                                         }
                                     });
@@ -303,6 +303,9 @@ public class MainActivity extends AppCompatActivity {
                     Firebase firebase = new Firebase("http://yydictionary.firebaseio.com/builder");
                     firebase.push().setValue(input);
                 }
+                return true;
+            }
+            case R.id.builder: {
                 return true;
             }
             default:

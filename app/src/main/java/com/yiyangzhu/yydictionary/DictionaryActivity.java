@@ -13,10 +13,10 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -252,19 +252,33 @@ public class DictionaryActivity extends AppCompatActivity {
 
     private void retrieveYoudaoDictionary() {
         Firebase firebase = new Firebase("https://yydictionary.firebaseio.com/youdao/");
-        firebase.addListenerForSingleValueEvent(new ValueEventListener() {
+        firebase.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                Map<String, List<String>> value = dataSnapshot.getValue(Map.class);
-                for (Map.Entry<String, List<String>> entry : value.entrySet()) {
-                    Word word = new Word(entry.getKey(), entry.getValue());
-                    YoudaoDictionary.add(word);
-                }
-                Log.d(TAG, "Youdao dictionary is loaded.");
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                String key = dataSnapshot.getKey();
+                List<String> value = dataSnapshot.getValue(List.class);
+                Word word = new Word(key, value);
+                YoudaoDictionary.add(word);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
             }
 
             @Override
             public void onCancelled(FirebaseError firebaseError) {
+
             }
         });
     }

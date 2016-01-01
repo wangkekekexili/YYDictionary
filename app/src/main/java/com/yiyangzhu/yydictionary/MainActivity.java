@@ -300,4 +300,12 @@ public class MainActivity extends AppCompatActivity {
                 return false;
         }
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (player != null) {
+            player.release();
+        }
+    }
 }

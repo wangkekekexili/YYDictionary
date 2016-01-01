@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
         inputEditText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                inputEditText.setText("");
+                inputEditText.selectAll();
                 definitionTextView.setText("");
                 inputEditText.setCursorVisible(true);
             }
@@ -106,6 +106,26 @@ public class MainActivity extends AppCompatActivity {
                                 for (JsonElement element : basicDefinitions) {
                                     definitions.add(element.getAsString());
                                 }
+                                // save definitions to firebase
+                                if (definitions.size() != 0) {
+                                    Firebase firebase = new Firebase("https://yydictionary.firebaseio.com/youdao");
+                                    Map<String, Object> update = new HashMap<>();
+                                    update.put(input, definitions);
+                                    firebase.updateChildren(update);
+                                }
+                            } else if (root.get("web") != null) {
+                                JsonArray webDefinitionPairs = root.get("web").getAsJsonArray();
+                                for (JsonElement webDefinitionPair : webDefinitionPairs) {
+                                    String key = webDefinitionPair.getAsJsonObject().get("key").getAsString();
+                                    if (key.toLowerCase().equals(input)) {
+                                        JsonArray webDefintionArray = webDefinitionPair.getAsJsonObject()
+                                                .get("value").getAsJsonArray();
+                                        for (JsonElement webDef : webDefintionArray) {
+                                            definitions.add(webDef.getAsString());
+                                        }
+
+                                    }
+                                }
                             }
                             if (definitions.size() == 0) {
                                 runOnUiThread(new Runnable() {
@@ -129,11 +149,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 });
 
-                                // save definitions to firebase
-                                Firebase firebase = new Firebase("https://yydictionary.firebaseio.com/youdao");
-                                Map<String, Object> update = new HashMap<>();
-                                update.put(input, definitions);
-                                firebase.updateChildren(update);
+
                             }
                         }
                     });

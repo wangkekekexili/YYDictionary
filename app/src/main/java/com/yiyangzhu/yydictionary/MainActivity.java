@@ -184,6 +184,15 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onResponse(Response response) throws IOException {
                                 Document document = Jsoup.parse(response.body().string(), "", Parser.xmlParser());
+
+                                // get suggestions
+                                List<String> suggestions = new ArrayList<>();
+                                Elements suggestionElements = document.getElementsByTag("suggestion");
+                                for (Element element : suggestionElements) {
+                                    suggestions.add(element.text());
+                                }
+
+                                // get audio
                                 Elements wavElements = document.getElementsByTag("wav");
                                 if (wavElements.size() == 0) {
                                     return;

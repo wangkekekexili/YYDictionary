@@ -328,8 +328,8 @@ public class DictionaryActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
         if (player != null) {
             player.release();
         }

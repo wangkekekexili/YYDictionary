@@ -13,7 +13,10 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -56,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         Firebase.setAndroidContext(getApplicationContext());
 
+        retrieveYoudaoDictionary();
+
         inputEditText.setCursorVisible(false);
         inputEditText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -80,79 +85,81 @@ public class MainActivity extends AppCompatActivity {
 
                     final OkHttpClient client = new OkHttpClient();
 
-                    Uri youdaoQuery = Uri.parse("http://fanyi.youdao.com/openapi.do?type=data&doctype=json&version=1.1")
-                            .buildUpon()
-                            .appendQueryParameter("keyfrom", getString(R.string.youdao_api_keyfrom))
-                            .appendQueryParameter("key", getString(R.string.youdao_api_key))
-                            .appendQueryParameter("q", input)
-                            .build();
-                    Log.d(TAG, youdaoQuery.toString());
-                    Request youdaoRequest = new Request.Builder()
-                            .url(youdaoQuery.toString())
-                            .build();
-                    client.newCall(youdaoRequest).enqueue(new Callback() {
-                        @Override
-                        public void onFailure(Request request, IOException e) {
+                    if (YoudaoDictionary.get(input) != null) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                definitionTextView.setText(buildResultString(
+                                        YoudaoDictionary.get(input).getDefinitions()));
+                            }
+                        });
+                    } else {
+                        Uri youdaoQuery = Uri.parse("http://fanyi.youdao.com/openapi.do?type=data&doctype=json&version=1.1")
+                                .buildUpon()
+                                .appendQueryParameter("keyfrom", getString(R.string.youdao_api_keyfrom))
+                                .appendQueryParameter("key", getString(R.string.youdao_api_key))
+                                .appendQueryParameter("q", input)
+                                .build();
+                        Log.d(TAG, youdaoQuery.toString());
+                        Request youdaoRequest = new Request.Builder()
+                                .url(youdaoQuery.toString())
+                                .build();
+                        client.newCall(youdaoRequest).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(Request request, IOException e) {
 
-                        }
+                            }
 
-                        @Override
-                        public void onResponse(Response response) throws IOException {
-                            JsonObject root = new JsonParser().parse(response.body().string()).getAsJsonObject();
-                            // if result contains "basic" definitions, then use it
-                            // else use "web" definitions.
-                            if (root.get("basic") != null) {
-                                JsonArray basicDefinitions = root.get("basic").getAsJsonObject().get("explains").getAsJsonArray();
-                                for (JsonElement element : basicDefinitions) {
-                                    definitions.add(element.getAsString());
-                                }
-                                // save definitions to firebase
-                                if (definitions.size() != 0) {
-                                    Firebase firebase = new Firebase("https://yydictionary.firebaseio.com/youdao");
-                                    Map<String, Object> update = new HashMap<>();
-                                    update.put(input, definitions);
-                                    firebase.updateChildren(update);
-                                }
-                            } else if (root.get("web") != null) {
-                                JsonArray webDefinitionPairs = root.get("web").getAsJsonArray();
-                                for (JsonElement webDefinitionPair : webDefinitionPairs) {
-                                    String key = webDefinitionPair.getAsJsonObject().get("key").getAsString();
-                                    if (key.toLowerCase().equals(input)) {
-                                        JsonArray webDefintionArray = webDefinitionPair.getAsJsonObject()
-                                                .get("value").getAsJsonArray();
-                                        for (JsonElement webDef : webDefintionArray) {
-                                            definitions.add(webDef.getAsString());
+                            @Override
+                            public void onResponse(Response response) throws IOException {
+                                JsonObject root = new JsonParser().parse(response.body().string()).getAsJsonObject();
+                                // if result contains "basic" definitions, then use it
+                                // else use "web" definitions.
+                                if (root.get("basic") != null) {
+                                    JsonArray basicDefinitions = root.get("basic").getAsJsonObject().get("explains").getAsJsonArray();
+                                    for (JsonElement element : basicDefinitions) {
+                                        definitions.add(element.getAsString());
+                                    }
+                                    // save definitions to firebase
+                                    if (definitions.size() != 0) {
+                                        Firebase firebase = new Firebase("https://yydictionary.firebaseio.com/youdao");
+                                        Map<String, Object> update = new HashMap<>();
+                                        update.put(input, definitions);
+                                        firebase.updateChildren(update);
+                                    }
+                                } else if (root.get("web") != null) {
+                                    JsonArray webDefinitionPairs = root.get("web").getAsJsonArray();
+                                    for (JsonElement webDefinitionPair : webDefinitionPairs) {
+                                        String key = webDefinitionPair.getAsJsonObject().get("key").getAsString();
+                                        if (key.toLowerCase().equals(input)) {
+                                            JsonArray webDefintionArray = webDefinitionPair.getAsJsonObject()
+                                                    .get("value").getAsJsonArray();
+                                            for (JsonElement webDef : webDefintionArray) {
+                                                definitions.add(webDef.getAsString());
+                                            }
+
                                         }
-
                                     }
                                 }
-                            }
-                            if (definitions.size() == 0) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        definitionTextView.setText("Sorry, but no definitions are found.");
-                                    }
-                                });
-                            } else {
-                                // build result string
-                                final StringBuilder sb = new StringBuilder();
-                                int count = 0;
-                                for (String definition : definitions) {
-                                    sb.append(String.format("%d. %s\n", ++count, definition));
+                                if (definitions.size() == 0) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            definitionTextView.setText("Sorry, but no definitions are found.");
+                                        }
+                                    });
+                                } else {
+                                    final String resultString = buildResultString(definitions);
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            definitionTextView.setText(resultString);
+                                        }
+                                    });
                                 }
-                                sb.deleteCharAt(sb.length() - 1);
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        definitionTextView.setText(sb.toString());
-                                    }
-                                });
-
-
                             }
-                        }
-                    });
+                        });
+                    }
 
                     // check if audio exists
                     // if not, download from Marriam-Webster
@@ -232,6 +239,35 @@ public class MainActivity extends AppCompatActivity {
         }
         player = MediaPlayer.create(getApplicationContext(), Uri.parse("file://" + audioFile.getAbsolutePath()));
         player.start();
+    }
+
+    private void retrieveYoudaoDictionary() {
+        Firebase firebase = new Firebase("https://yydictionary.firebaseio.com/youdao/");
+        firebase.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Map<String, List<String>> value = dataSnapshot.getValue(Map.class);
+                for (Map.Entry<String, List<String>> entry : value.entrySet()) {
+                    Word word = new Word(entry.getKey(), entry.getValue());
+                    YoudaoDictionary.add(word);
+                }
+                Log.d(TAG, "Youdao dictionary is loaded.");
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+            }
+        });
+    }
+
+    private String buildResultString(List<String> definitions) {
+        final StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (String definition : definitions) {
+            sb.append(String.format("%d. %s\n", ++count, definition));
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        return sb.toString();
     }
 
     @Override

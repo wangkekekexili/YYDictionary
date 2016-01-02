@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">YYDictionary</string>
+
+    <string name="finished">Congratulations</string>
 </resources>

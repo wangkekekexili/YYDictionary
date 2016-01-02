@@ -1,5 +1,6 @@
 package com.yiyangzhu.yydictionary;
 
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -47,8 +48,10 @@ public class DictionaryActivity extends AppCompatActivity {
 
     private static String TAG = DictionaryActivity.class.getSimpleName();
 
-    @Bind(R.id.input) EditText inputEditText;
-    @Bind(R.id.definition) TextView definitionTextView;
+    @Bind(R.id.input)
+    EditText inputEditText;
+    @Bind(R.id.definition)
+    TextView definitionTextView;
 
     private MediaPlayer player;
 
@@ -192,7 +195,20 @@ public class DictionaryActivity extends AppCompatActivity {
                                 }
 
                                 // get audio
-                                Elements wavElements = document.getElementsByTag("wav");
+                                Elements entries = document.getElementsByTag("entry");
+                                if (entries.size() == 0) {
+                                    return;
+                                }
+                                Element firstEntry = entries.get(0);
+                                Elements ewElements = firstEntry.getElementsByTag("ew");
+                                if (ewElements.size() != 1) {
+                                    return;
+                                }
+                                if (!ewElements.get(0).text().equals(input)) {
+                                    return;
+                                }
+
+                                Elements wavElements = firstEntry.getElementsByTag("wav");
                                 if (wavElements.size() == 0) {
                                     return;
                                 } else {
@@ -245,6 +261,7 @@ public class DictionaryActivity extends AppCompatActivity {
     private void playAudio(File audioFile) {
         if (player != null) {
             player.stop();
+            player.release();
         }
         player = MediaPlayer.create(getApplicationContext(), Uri.parse("file://" + audioFile.getAbsolutePath()));
         player.start();
@@ -312,14 +329,19 @@ public class DictionaryActivity extends AppCompatActivity {
                 return true;
             }
             case R.id.add: {
-                String input = inputEditText.getText().toString();
-                if (!input.trim().equals("")) {
+                String input = inputEditText.getText().toString().trim();
+                if (!input.equals("")) {
                     Firebase firebase = new Firebase("http://yydictionary.firebaseio.com/builder");
-                    firebase.push().setValue(input);
+                    VocabularyBuilderItem builderItem = new VocabularyBuilderItem(input);
+                    Map<String, Object> update = new HashMap<>();
+                    update.put(input, builderItem.toMap());
+                    firebase.updateChildren(update);
                 }
                 return true;
             }
             case R.id.builder: {
+                Intent intent = new Intent(this, BuilderActivity.class);
+                startActivity(intent);
                 return true;
             }
             default:

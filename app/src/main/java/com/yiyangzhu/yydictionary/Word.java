@@ -30,9 +30,12 @@ public class Word {
 
     @Override
     public String toString() {
-        return "Word{" +
-                "word='" + word + '\'' +
-                ", definitions=" + definitions +
-                '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append(word);
+        sb.append("\n");
+        for (int index = 0; index < definitions.size(); index++) {
+            sb.append(String.format("%d. %s\n", index+1, definitions.get(index)));
+        }
+        return sb.toString();
     }
 }

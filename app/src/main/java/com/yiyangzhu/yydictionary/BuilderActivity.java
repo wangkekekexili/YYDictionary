@@ -103,8 +103,10 @@ public class BuilderActivity extends AppCompatActivity {
                         if (!flipped) {
                             flipped = true;
                             Word word = YoudaoDictionary.get(show.getText().toString());
-                            show.setText(word.toString());
-                            show.setGravity(Gravity.NO_GRAVITY);
+                            if (word != null) {
+                                show.setText(word.toString());
+                                show.setGravity(Gravity.NO_GRAVITY);
+                            }
                         }
                     }
                 });
@@ -115,8 +117,10 @@ public class BuilderActivity extends AppCompatActivity {
                         if (!flipped) {
                             flipped = true;
                             Word word = YoudaoDictionary.get(show.getText().toString());
-                            show.setText(word.toString());
-                            show.setGravity(Gravity.NO_GRAVITY);
+                            if (word != null) {
+                                show.setText(word.toString());
+                                show.setGravity(Gravity.NO_GRAVITY);
+                            }
                         }
                     }
                 });

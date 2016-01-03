@@ -152,7 +152,9 @@ public class BuilderActivity extends AppCompatActivity {
                                 show.setGravity(Gravity.CENTER_HORIZONTAL);
                                 player = MediaPlayer.create(BuilderActivity.this,
                                         Uri.parse("file://" + new File(getFilesDir(), front.getWord() + ".wav").toString()));
-                                player.start();
+                                if (player != null) {
+                                    player.start();
+                                }
                             }
                         } else {
                             showEnd();
@@ -187,7 +189,9 @@ public class BuilderActivity extends AppCompatActivity {
                                 show.setGravity(Gravity.CENTER_HORIZONTAL);
                                 player = MediaPlayer.create(BuilderActivity.this,
                                         Uri.parse("file://" + new File(getFilesDir(), front.getWord() + ".wav").toString()));
-                                player.start();
+                                if (player != null) {
+                                    player.start();
+                                }
                             }
                         } else {
                             showEnd();
